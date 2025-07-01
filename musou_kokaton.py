@@ -242,6 +242,19 @@ class Score:
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
 
+class gravity(pg.sprite.Sprite):
+    def __init__(self, life: int):
+        super().__init__()
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        self.image.fill((0, 0, 0))
+        self.image.set_alpha(128)
+        self.rect = self.image.get_rect()
+        self.life = life
+
+    def update(self):
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
 
 class NeoBeam:
     """
@@ -286,6 +299,8 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
 
+    gravity_fields = pg.sprite.Group()
+
     tmr = 0
     clock = pg.time.Clock()
     while True:
@@ -300,6 +315,10 @@ def main():
                         beams.add(beam)
                 else:  # スペースキーのみで通常ビーム発射
                     beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
+                if score.value >= 200:
+                    score.value -= 200
+                    gravity_fields.add(gravity(400))
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
@@ -336,6 +355,11 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        gravity_fields.update()
+        for grav in gravity_fields:
+            for bomb in pg.sprite.spritecollide(grav, bombs, True):
+                exps.add(Explosion(bomb, 30))
+        gravity_fields.draw(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
